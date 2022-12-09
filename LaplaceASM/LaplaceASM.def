@@ -1,0 +1,2 @@
+LIBRARY LaplaceASM
+EXPORTS processImage
