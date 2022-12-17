@@ -17,8 +17,8 @@ namespace Laplace
     public partial class MainWindow : Window
     {
 
-        [DllImport("C:\\Studia\\ja\\sem5\\Laplace\\x64\\Debug\\LaplaceASM.dll")]
-        public static extern void processImage(byte[] original, byte[] processed, int[] filter, int test);
+        [DllImport("C:\\Studia\\ja\\sem5\\Laplace\\x64\\Debug\\LaplaceASM.dll", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void processImage(byte[] original, byte[] processed, int[] filter, int chunk, int stride);
 
         LaplaceC laplaceC = new LaplaceC();
 
@@ -56,13 +56,32 @@ namespace Laplace
             sw.Restart();
             //divine into smaller pieces
             var listOfChunks = new List<int>();
-            for(int i = stride; i < stride*(height-1); i+=stride)//for full stride
+            for (int i = stride; i < stride * (height - 1); i += stride)//for full stride
             {
                 for (int j = bpp; j != stride - bpp; j += bpp) // for 1px
                 {
-                    listOfChunks.Add(i+j);
+                    listOfChunks.Add(i + j);
                 }
             }
+            //var listOfPixels = new List<byte[]>();
+            //for (int i = stride; i < stride * (height - 1); i += stride)
+            //{
+            //    for (int j = bpp; j != stride - bpp; j += bpp)
+            //    {
+            //        listOfPixels.Add(new byte[]
+            //        {
+            //            input[i+j-stride-bpp],
+            //            input[i+j-stride],
+            //            input[i+j-stride+bpp],
+            //            input[i+j-bpp],
+            //            input[i+j],
+            //            input[i+j+bpp],
+            //            input[i+j+stride-bpp],
+            //            input[i+j+stride],
+            //            input[i+j+stride+bpp]
+            //        });
+            //    }
+            //}
             //processing
             if (CSharp.IsChecked != null && CSharp.IsChecked == true)
             {
@@ -72,11 +91,23 @@ namespace Laplace
                     laplaceC.processImage(input, output, filter, stride, bpp, chunk);
                 });
                 sw.Stop();
-            } 
+            }
+            //if (CSharp.IsChecked != null && CSharp.IsChecked == true)
+            //{
+            //    sw.Start();
+            //    Parallel.ForEach(listOfPixels, options, pixel =>
+            //    {
+            //        laplaceC.processImage(pixel, output, filter);
+            //    });
+            //    sw.Stop();
+            //}
             else if (ASM.IsChecked != null && ASM.IsChecked == true)
             {
                 sw.Start();
-                processImage(input, output, filter, 256);
+                Parallel.ForEach(listOfChunks, options, chunk =>
+                {
+                    processImage(input, output, filter, chunk, stride);
+                });
                 sw.Stop();
             }
             Marshal.Copy(input, 0, inputData.Scan0, stride * height);
@@ -158,7 +189,7 @@ namespace Laplace
 
         private void testAction()
         {
-            string filename = "C:\\Users\\Pisko\\Desktop\\test.png";
+            string filename = "C:\\Users\\Pisko\\Desktop\\anime.png";
             Bitmap newBitmap = (Bitmap)Bitmap.FromFile(filename);
             Bitmap bmp = newBitmap.Clone(new Rectangle(0, 0, newBitmap.Width, newBitmap.Height), PixelFormat.Format32bppArgb);
             originalImage = bmp;
