@@ -1,16 +1,23 @@
 .code
-
+;parameters
 ;rcx - input
 ;rdx - output
 ;r8 - filter
-;r9 - pixel number
+;r9 - current byte index
 ;[rsp+40] - stride
 
+;purpose of registers
+;r10 - used to iterate through kernel convolution 
+;r11 - amount of bytes left to process
+
 processImage proc export
+; set amount of bytes to process
+	MOV R11, [RSP+40]
+	SUB R11, 8
+NextPixel:
 	MOV R10, R9 ; middle 
 	SUB R10, [RSP+40] ; top middle
 	SUB R10, 4 ; top left
-
 	;set xmm registers with 3x3 matrix dword color coded pixels
 	PMOVZXBD xmm0, [RCX+R10] ; top left
 	PMOVZXBD xmm1, [RCX+R10+4] ; top middle
@@ -70,8 +77,8 @@ processImage proc export
 	PADDD xmm0, xmm6
 	PADDD xmm0, xmm7
 	PADDD xmm0, xmm8
-	;check if pixel value is between 0 and 255 and save pixel output ptr
 
+	;check if pixel value is between 0 and 255 and save pixel output ptr
 Blue:
 	MOVD EAX, xmm0
 	CMP EAX, 255
@@ -98,6 +105,10 @@ Alpha:
 	MOV [RDX+R9+2], AL
 	MOV EAX, 255
 	MOV [RDX+R9+3], AL
+	ADD R9, 4
+	SUB R11, 4
+	CMP R11, 0 ; check if no more bytes to process
+	JNE NextPixel
 	ret
 
 BlueGreater:

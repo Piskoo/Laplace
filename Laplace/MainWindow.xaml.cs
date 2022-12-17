@@ -48,59 +48,27 @@ namespace Laplace
             byte[] input = new byte[stride * height];
             byte[] output = new byte[stride * height];
             Marshal.Copy(inputData.Scan0, input, 0, stride * height);
-            Marshal.Copy(outputData.Scan0, output, 0, stride * height);
             int bpp = 4;
             int[] filter = FilterTypes[FilterType.SelectedIndex];
 
             ParallelOptions options = new ParallelOptions { MaxDegreeOfParallelism = (int)ThreadSlider.Value };
             sw.Restart();
-            //divine into smaller pieces
+
+            //divide into smaller pieces
             var listOfChunks = new List<int>();
             for (int i = stride; i < stride * (height - 1); i += stride)//for full stride
             {
-                for (int j = bpp; j != stride - bpp; j += bpp) // for 1px
-                {
-                    listOfChunks.Add(i + j);
-                }
+                listOfChunks.Add(i+bpp);
             }
-            //var listOfPixels = new List<byte[]>();
-            //for (int i = stride; i < stride * (height - 1); i += stride)
-            //{
-            //    for (int j = bpp; j != stride - bpp; j += bpp)
-            //    {
-            //        listOfPixels.Add(new byte[]
-            //        {
-            //            input[i+j-stride-bpp],
-            //            input[i+j-stride],
-            //            input[i+j-stride+bpp],
-            //            input[i+j-bpp],
-            //            input[i+j],
-            //            input[i+j+bpp],
-            //            input[i+j+stride-bpp],
-            //            input[i+j+stride],
-            //            input[i+j+stride+bpp]
-            //        });
-            //    }
-            //}
-            //processing
             if (CSharp.IsChecked != null && CSharp.IsChecked == true)
             {
                 sw.Start();
                 Parallel.ForEach(listOfChunks, options, chunk =>
                 {
-                    laplaceC.processImage(input, output, filter, stride, bpp, chunk);
+                    laplaceC.processImage(input, output, filter, chunk, stride);
                 });
                 sw.Stop();
             }
-            //if (CSharp.IsChecked != null && CSharp.IsChecked == true)
-            //{
-            //    sw.Start();
-            //    Parallel.ForEach(listOfPixels, options, pixel =>
-            //    {
-            //        laplaceC.processImage(pixel, output, filter);
-            //    });
-            //    sw.Stop();
-            //}
             else if (ASM.IsChecked != null && ASM.IsChecked == true)
             {
                 sw.Start();
