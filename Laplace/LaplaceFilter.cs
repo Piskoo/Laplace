@@ -4,18 +4,19 @@ using System.Windows.Media.Imaging;
 using System.Drawing;
 using System.IO;
 using Microsoft.Win32;
-using System.Windows.Controls;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using LaplaceCSharp;
 using System.Drawing.Imaging;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace Laplace
 {
-    public partial class MainWindow : Window
+    public partial class LaplaceFilter : Window
     {
+
 
         [DllImport("C:\\Studia\\ja\\sem5\\Laplace\\x64\\Debug\\LaplaceASM.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern void processImage(byte[] original, byte[] processed, int[] filter, int chunk, int stride);
@@ -28,16 +29,15 @@ namespace Laplace
 
         int[][] FilterTypes;
 
-        public MainWindow()
+        public LaplaceFilter()
         {
             originalImage = new Bitmap(1, 1);
             processedImage = new Bitmap(1, 1);
             InitializeComponent();
             CreateFilters();
-            testAction();
         }
 
-        private void Laplacianfilter()
+        private void Laplacianfilter(int threads)
         {
             processedImage = (Bitmap)originalImage.Clone();
             var inputData = originalImage.LockBits(new Rectangle(0, 0, originalImage.Width, originalImage.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
@@ -51,7 +51,7 @@ namespace Laplace
             int bpp = 4;
             int[] filter = FilterTypes[FilterType.SelectedIndex];
 
-            ParallelOptions options = new ParallelOptions { MaxDegreeOfParallelism = (int)ThreadSlider.Value };
+            ParallelOptions options = new ParallelOptions { MaxDegreeOfParallelism = threads};
             sw.Restart();
 
             //divide into smaller pieces
@@ -96,15 +96,35 @@ namespace Laplace
         }
 
 
-        private void RunClick(object sender, RoutedEventArgs e)
+        private async void RunClick(object sender, RoutedEventArgs e)
         {
-            
-            processedImage = (Bitmap)originalImage.Clone();
-            Laplacianfilter();
-            Timer.Text = sw.Elapsed.TotalMilliseconds.ToString()+" ms";
-            SaveButton.IsEnabled = true;
-            ProcessedImage.Source = BitmapToImageSource(processedImage);
-
+            if (TestsCheckBox.IsChecked == false)
+            {
+                Laplacianfilter((int)ThreadSlider.Value);
+                Timer.Text = sw.Elapsed.TotalMilliseconds.ToString() + " ms";
+                SaveButton.IsEnabled = true;
+                ProcessedImage.Source = BitmapToImageSource(processedImage);
+            } else 
+            {
+                int numberOfRuns = 100;
+                string[] AvgMeasurments = new string[7];
+                for (int i = 0; i != 7; i++)
+                {
+                    List<double> measurments = new List<double>();
+                    int threads = (int)Math.Pow(2, (double)i);
+                    Laplacianfilter(threads);
+                    SaveButton.IsEnabled = true;
+                    ProcessedImage.Source = BitmapToImageSource(processedImage);
+                    for (int j = 0; j != numberOfRuns; j++)
+                    {
+                        Laplacianfilter(threads);
+                        measurments.Add( sw.Elapsed.TotalMilliseconds);
+                    }
+                    double result = Math.Round(measurments.Sum() / numberOfRuns, 3);
+                    AvgMeasurments[i] = result.ToString();
+                }
+                    File.WriteAllLines($"{DateTime.Now.ToString("yyyy-dd-M--HH-mm-ss")}.txt", AvgMeasurments);
+            }
         }
         private void SaveClick(object sender, RoutedEventArgs e)
         {
@@ -122,7 +142,7 @@ namespace Laplace
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Filter = "Image files (.jpg,.jpeg,.png)|*.jpg;*.jpeg;*.png|All Files (.)|*.";
-            openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             Nullable<bool> result = openFileDialog.ShowDialog();
             if (result == true)
             {
@@ -150,24 +170,5 @@ namespace Laplace
             }
         }
 
-        private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-
-        }
-
-        private void testAction()
-        {
-            string filename = "C:\\Users\\Pisko\\Desktop\\anime.png";
-            Bitmap newBitmap = (Bitmap)Bitmap.FromFile(filename);
-            Bitmap bmp = newBitmap.Clone(new Rectangle(0, 0, newBitmap.Width, newBitmap.Height), PixelFormat.Format32bppArgb);
-            originalImage = bmp;
-            OriginalImage.Source = new BitmapImage(new Uri(filename));
-            RunButton.IsEnabled = true;
-            processedImage = (Bitmap)originalImage.Clone();
-            Laplacianfilter();
-            Timer.Text = sw.Elapsed.TotalMilliseconds.ToString() + " ms";
-            SaveButton.IsEnabled = true;
-            ProcessedImage.Source = BitmapToImageSource(processedImage);
-        }
     }
 }
