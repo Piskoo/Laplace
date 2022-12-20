@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Laplacian Filter" Height="720" Width="1280">
-    <Grid x:Name="MainGrid" Background="MintCream">
+    <Grid x:Name="MainGrid" Background="LightGray">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="*"/>
@@ -122,9 +122,9 @@
                   Grid.Row="1" 
                   VerticalAlignment="Top" 
                   Width="80">
-            <ComboBoxItem>LAPL1</ComboBoxItem>
+            <ComboBoxItem>+LAPL1</ComboBoxItem>
+            <ComboBoxItem>-LAPL1</ComboBoxItem>
             <ComboBoxItem>LAPL2</ComboBoxItem>
-            <ComboBoxItem>LAPL3</ComboBoxItem>
             <ComboBoxItem>ukośny</ComboBoxItem>
             <ComboBoxItem>poziomy</ComboBoxItem>
             <ComboBoxItem>pionowy</ComboBoxItem>

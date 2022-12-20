@@ -88,8 +88,8 @@ namespace Laplace
         {
             FilterTypes = new int[6][];
             FilterTypes[0] = new int[] { 0, -1, 0, -1, 4, -1, 0, -1, 0 };
-            FilterTypes[1] = new int[] { -1, -1, -1, -1, 8, -1, -1, -1, -1 };
-            FilterTypes[2] = new int[] { 1, -2, 1, -2, 4, -2, 1, -2, 1 };
+            FilterTypes[1] = new int[] { 0, 1, 0, 1, -4, 1, 0, 1, 0 };
+            FilterTypes[2] = new int[] { -1, -1, -1, -1, 8, -1, -1, -1, -1 };
             FilterTypes[3] = new int[] { -1, 0, -1, 0, 4, 0, -1, 0, -1 };
             FilterTypes[4] = new int[] { 0, -1, 0, 0, 2, 0, 0, -1, 0 };
             FilterTypes[5] = new int[] { 0, 0, 0, -1, 2, -1, 0, 0, 0 };
@@ -106,7 +106,7 @@ namespace Laplace
                 ProcessedImage.Source = BitmapToImageSource(processedImage);
             } else 
             {
-                int numberOfRuns = 100;
+                int numberOfRuns = 20;
                 string[] AvgMeasurments = new string[7];
                 for (int i = 0; i != 7; i++)
                 {
@@ -147,11 +147,18 @@ namespace Laplace
             if (result == true)
             {
                 string filename = openFileDialog.FileName;
-                Bitmap newBitmap = (Bitmap)Bitmap.FromFile(filename);
-                Bitmap bmp = newBitmap.Clone(new Rectangle(0, 0, newBitmap.Width, newBitmap.Height), PixelFormat.Format32bppArgb);
-                originalImage = bmp;
-                OriginalImage.Source = new BitmapImage(new Uri(filename));
-                RunButton.IsEnabled = true;
+                try
+                {
+                    Bitmap newBitmap = (Bitmap)Bitmap.FromFile(filename);
+                    Bitmap bmp = newBitmap.Clone(new Rectangle(0, 0, newBitmap.Width, newBitmap.Height), PixelFormat.Format32bppArgb);
+                    originalImage = bmp;
+                    OriginalImage.Source = new BitmapImage(new Uri(filename));
+                    RunButton.IsEnabled = true;
+                }
+                catch(Exception ex)
+                {
+                    MessageBox.Show("Invalid file");
+                }
             }
         }
 
