@@ -68,7 +68,7 @@ NextPixel:
 	VPBROADCASTD xmm9, xmm9
 	PMULLD xmm8, xmm9
 
-	; sum pixel compounds to xmm0
+	; sum pixel components to xmm0
 	PADDD xmm0, xmm1
 	PADDD xmm0, xmm2
 	PADDD xmm0, xmm3
